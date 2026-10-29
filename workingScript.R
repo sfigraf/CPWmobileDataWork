@@ -1,4 +1,5 @@
 library(tidyverse)
+library(sf)
 #test tags
 
 testTags <- read_csv("data/testTags.csv", 
@@ -10,16 +11,32 @@ dayOneDate <- ymd_hms("2026-07-14 10:15:00", tz = "America/Denver")
 ### DAY TWO SURVEY DATE
 
 ####M1
-m1_07Day1 <- read_csv("data/CR1000 M1_Detection_20260714.dat", skip = 1)
-names(m1_07Day1)
-m1_07Day1_2 <- m1_07Day1 %>%
+m1_07Day1 <- read_csv("data/CR1000 M1_Detection_20260714.dat", skip = 1) %>%
+  mutate(Ant = "M1")
+##M2 day 1
+m2_07Day1 <- read_csv("data/CR1000X M2_Detection_20260714.dat", skip = 1)%>%
+  mutate(Ant = "M2")
+
+####M1 day 2
+m1_07Day2 <- read_csv("data/CR1000 M1_Detection_20260715.dat", skip = 1) %>%
+  mutate(Ant = "M1")
+##M2 day 2
+m2_07Day2 <- read_csv("data/CR1000X M2_Detection_20260715.dat", skip = 1) %>%
+  mutate(Ant = "M2")
+
+dfList <- list(m1_07Day1, m1_07Day2, 
+               m2_07Day1, m2_07Day2)
+allDataUnclean <- bind_rows(dfList)
+
+names(allDataUnclean)
+allData_2 <- allDataUnclean %>%
   filter(str_detect(TagID, "^900_\\d{12}"))
 #QAQC
-deletedRows <- m1_07Day1 %>%
-  anti_join(m1_07Day1_2)
+deletedRows <- allDataUnclean %>%
+  anti_join(allData_2)
 
 ##parsing lat/long 
-m1_07Day1_latLong <- m1_07Day1_2 %>%
+allData_latLong <- allData_2 %>%
   mutate(
     #degrees
     Lat_deg = as.numeric(str_sub(rmclatitude, 1, 2)), 
@@ -36,7 +53,7 @@ m1_07Day1_latLong <- m1_07Day1_2 %>%
     
   )
 ### TImStamp
-m1_07Day1_latLongTimsetamp <- m1_07Day1_latLong %>%
+allData_latLongTimsetamp <- allData_latLong %>%
   mutate(
     # 1. Convert the original column to a proper datetime format (POSIXct)
     # ymd_hms automatically handles the fractional seconds (.04)
@@ -52,23 +69,22 @@ m1_07Day1_latLongTimsetamp <- m1_07Day1_latLong %>%
   filter(TIMESTAMP > dayOneDate)
 
 #correct tag # and no dupes
-m1_07Day1_latLongTimsetampTags <- m1_07Day1_latLongTimsetamp %>%
+allData_latLongTimsetampTags <- allData_latLongTimsetamp %>%
   #making sure time order is correct, probably redundant
-  arrange(TIMESTAMP) %>%
+  arrange(Ant, TIMESTAMP) %>%
   mutate(TagID = str_sub(TagID, 5), 
          dupes = if_else(lag(TagID) == TagID, 1, 0, missing = 0)
   ) %>%
-  #using != 1 because there's NAs in there too
-  filter(dupes != 1) %>%
-  select(-dupes)
+  filter(dupes != 1) #%>%
+  #select(-dupes)
 
 #filtering out test tags
-m1_07Day1_latLongTimsetampTagsNoTests <- m1_07Day1_latLongTimsetampTags %>%
+allData_latLongTimsetampTagsNoTests <- allData_latLongTimsetampTags %>%
   filter(!TagID %in% unique(testTags$cleanTag))
 
-m1_07Day1_final <- m1_07Day1_latLongTimsetampTagsNoTests %>%
-  mutate(Ant = "M1", 
-         Pass = 1, 
+allData_final <- allData_latLongTimsetampTagsNoTests %>%
+  mutate(#Ant = "M1", 
+         Pass = NA, 
          River = "Colorado River", 
          MobileSite = NA, 
          Num = NA, 
@@ -76,7 +92,7 @@ m1_07Day1_final <- m1_07Day1_latLongTimsetampTagsNoTests %>%
          Survey = "Summer 2026", 
          Event = "Detection")
 ## Get columns in right order
-m1_07Day1_final2 <- m1_07Day1_final %>%
+allData_final2 <- allData_final %>%
   select(
     Num,
     River,
@@ -94,3 +110,31 @@ m1_07Day1_final2 <- m1_07Day1_final %>%
     Survey,
     Notes)
 
+##checking with already done data
+combinedGISdatatoCheck <- read_csv("data/combinedGISdatatoCheck.csv")
+
+## reprojecting coords
+latLongCRS <- st_crs("+proj=longlat +datum=WGS84 +no_defs") #should be same as +init=epsg:4326
+
+dataInWGS84 <- sf::st_as_sf(allData_final2, coords = c("Long_DD", "Lat_DD"), crs = latLongCRS, remove = FALSE)
+
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldImagery,
+                   options = providerTileOptions(maxZoom = 19.5)
+  ) %>%
+  addAwesomeMarkers(data = dataInWGS84,
+                    #clusterOptions = markerClusterOptions(),
+                    label = paste(dataInWGS84$Date, "\n",
+                                  dataInWGS84$Time, "\n",
+                                  dataInWGS84$TagID),
+                    popup = paste(dataInWGS84$Ant),
+                    group = "Antennas")
+#condensedEventsSF <- sf::st_as_sf(condensedEventsFiltered, coords = c("UTM_X", "UTM_Y"), crs = 32613)
+#convert to lat/long
+reproject <- sf::st_transform(dataInWGS84, 32613)
+reproject2 <- reproject %>%
+  mutate(
+    UTM_X = st_coordinates(.)[, "X"],
+    UTM_Y = st_coordinates(.)[, "Y"]
+  ) %>%
+  st_drop_geometry()
