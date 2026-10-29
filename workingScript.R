@@ -52,6 +52,9 @@ allData_latLong <- allData_2 %>%
     Long_DD = -(round(Long_deg + (Long_min/60), 6))
     
   )
+
+x <- ymd_hms("2026-07-14 15:12:20.886")
+round_date(x, "second")
 ### TImStamp
 allData_latLongTimsetamp <- allData_latLong %>%
   mutate(
@@ -63,23 +66,28 @@ allData_latLongTimsetamp <- allData_latLong %>%
     # DetDate = as.Date(TIMESTAMP),
     # 
     # # 3. Extract just the time part as a character (or time class)
-    # DetTime = format(TIMESTAMP, "%H:%M:%S") 
+    DetTime2 = format(round_date(TIMESTAMP, "second"), "%H:%M:%S") 
   ) %>%
   #remove tags before starting
   filter(TIMESTAMP > dayOneDate)
 
 #correct tag # and no dupes
-allData_latLongTimsetampTags <- allData_latLongTimsetamp %>%
+allData_latLongTimsetampTags2 <- allData_latLongTimsetamp %>%
   #making sure time order is correct, probably redundant
   arrange(Ant, TIMESTAMP) %>%
   mutate(TagID = str_sub(TagID, 5), 
-         dupes = if_else(lag(TagID) == TagID, 1, 0, missing = 0)
+         dupes = if_else(lag(TagID) == TagID, 0, 1, missing = 1)
+         #dupes = if_else(lag(TagID) == TagID, 1, 0, missing = 0)
   ) %>%
-  filter(dupes != 1) #%>%
+  filter(dupes == 1) #%>%
   #select(-dupes)
+####### qaqc
+check <- allData_latLongTimsetampTags %>%
+  select(TIMESTAMP, TagID, Date = DetDate, DetTime, Time = DetTime2)
+
 
 #filtering out test tags
-allData_latLongTimsetampTagsNoTests <- allData_latLongTimsetampTags %>%
+allData_latLongTimsetampTagsNoTests <- allData_latLongTimsetampTags2 %>%
   filter(!TagID %in% unique(testTags$cleanTag))
 
 allData_final <- allData_latLongTimsetampTagsNoTests %>%
@@ -98,7 +106,8 @@ allData_final2 <- allData_final %>%
     River,
     MobileSite,
     Date = DetDate,
-    Time = DetTime,
+    #time is the time on the timsetampo not in the native DetTime column
+    Time = DetTime2,
     T109_C,
     Long_DD,
     Lat_DD,
@@ -112,22 +121,34 @@ allData_final2 <- allData_final %>%
 
 ##checking with already done data
 combinedGISdatatoCheck <- read_csv("data/combinedGISdatatoCheck.csv")
+x<- combinedGISdatatoCheck %>%
+  select(TagID, Date, Time, Lat_DD, Long_DD) %>%
+  mutate(Date = as.character(mdy(Date)), 
+         Time = as.character(Time))
+checkFinal <- allData_final2 %>%
+  mutate(TagID = as.numeric(TagID)) %>%
+  select(TagID, Date, Time, Lat_DD, Long_DD) %>%
+  left_join(x, by =c("TagID", "Date", "Time")) %>%
+  mutate(latCheck = Lat_DD.x - Lat_DD.y, 
+         longCheck = Long_DD.x- Long_DD.y)
 
 ## reprojecting coords
 latLongCRS <- st_crs("+proj=longlat +datum=WGS84 +no_defs") #should be same as +init=epsg:4326
 
 dataInWGS84 <- sf::st_as_sf(allData_final2, coords = c("Long_DD", "Lat_DD"), crs = latLongCRS, remove = FALSE)
 
+## MAP: can also be used to check crcc etc
 leaflet() %>%
   addProviderTiles(providers$Esri.WorldImagery,
                    options = providerTileOptions(maxZoom = 19.5)
   ) %>%
   addAwesomeMarkers(data = dataInWGS84,
-                    #clusterOptions = markerClusterOptions(),
-                    label = paste(dataInWGS84$Date, "\n",
-                                  dataInWGS84$Time, "\n",
+                    clusterOptions = markerClusterOptions(),
+                    label = paste(dataInWGS84$Ant),
+                    popup = paste(
+                                  dataInWGS84$Date, "<br>",
+                                  dataInWGS84$Time, "<br>",
                                   dataInWGS84$TagID),
-                    popup = paste(dataInWGS84$Ant),
                     group = "Antennas")
 #condensedEventsSF <- sf::st_as_sf(condensedEventsFiltered, coords = c("UTM_X", "UTM_Y"), crs = 32613)
 #convert to lat/long
