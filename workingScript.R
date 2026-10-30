@@ -1,10 +1,19 @@
 library(tidyverse)
 library(sf)
-#test tags
+library(janitor)
 
+### these data should be the same for any survey
+#test tags
 testTags <- read_csv("data/testTags.csv", 
                      col_types = cols(TAG = col_character())) %>%
   mutate(cleanTag = str_sub(TAG, 4))
+
+Release <- read.csv("./data/WGFP_ReleaseData_Master_20260715.csv", na.strings = c(""," ","NA"), colClasses=c(rep("character",7), "numeric", "numeric",rep("character",9))) %>%
+  janitor::remove_empty()
+releaseSites <- read_csv("data/releaseSites.csv") %>%
+  select(-River)
+  #distinct(RS_Num, .keep_all = TRUE)
+#write_csv(releaseSites, "releaseSites.csv")
 ###DAY ONE SURVEY DATE
 #time was inferred by the tags and gaps in data
 dayOneDate <- ymd_hms("2026-07-14 10:15:00", tz = "America/Denver")
@@ -138,18 +147,55 @@ latLongCRS <- st_crs("+proj=longlat +datum=WGS84 +no_defs") #should be same as +
 dataInWGS84 <- sf::st_as_sf(allData_final2, coords = c("Long_DD", "Lat_DD"), crs = latLongCRS, remove = FALSE)
 
 ## MAP: can also be used to check crcc etc
-leaflet() %>%
+map <- leaflet() %>%
   addProviderTiles(providers$Esri.WorldImagery,
                    options = providerTileOptions(maxZoom = 19.5)
-  ) %>%
-  addAwesomeMarkers(data = dataInWGS84,
-                    clusterOptions = markerClusterOptions(),
-                    label = paste(dataInWGS84$Ant),
-                    popup = paste(
-                                  dataInWGS84$Date, "<br>",
-                                  dataInWGS84$Time, "<br>",
-                                  dataInWGS84$TagID),
-                    group = "Antennas")
+  ) 
+dataInWGS842 <- dataInWGS84 %>%
+  mutate(categoryColumn = paste(Date, Ant))
+categories <- unique(dataInWGS842$categoryColumn)
+color_palette <- colorFactor(
+  palette = c("red", "blue", "green", "purple"), # Choose 4 distinct colors
+  domain = categories
+)
+for (cat in categories) {
+  
+  # Filter data for just this category
+  df_subset <- dataInWGS842 %>% 
+    filter(categoryColumn == cat)
+  
+  map <- map %>%
+    addCircleMarkers(
+      data = df_subset,
+      lng = ~Long_DD, 
+      lat = ~Lat_DD,
+      group = as.character(cat),       # Sets the group name for layer control
+      color = ~color_palette(categoryColumn),
+      radius = 5,
+      stroke = FALSE,
+      fillOpacity = 0.8,
+      popup = ~paste(
+        df_subset$Date, "<br>",
+        df_subset$Time, "<br>",
+        df_subset$TagID) # Optional popup
+    )
+}
+
+map <- map %>%
+  addLayersControl(
+    overlayGroups = as.character(categories),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+map
+# %>%
+#   addAwesomeMarkers(data = dataInWGS84,
+#                     clusterOptions = markerClusterOptions(),
+#                     label = paste(dataInWGS84$Ant),
+#                     popup = paste(
+#                                   dataInWGS84$Date, "<br>",
+#                                   dataInWGS84$Time, "<br>",
+#                                   dataInWGS84$TagID),
+#                     group = "Antennas")
 #condensedEventsSF <- sf::st_as_sf(condensedEventsFiltered, coords = c("UTM_X", "UTM_Y"), crs = 32613)
 #convert to lat/long
 reproject <- sf::st_transform(dataInWGS84, 32613)
@@ -159,3 +205,32 @@ reproject2 <- reproject %>%
     UTM_Y = st_coordinates(.)[, "Y"]
   ) %>%
   st_drop_geometry()
+
+###Getting attribute info
+attributeINfo <- Release %>%
+  select(TagID,
+         Species,
+         Length,
+         Weight,
+         TagSize,
+         ReleaseSite
+    ) %>%
+  right_join(reproject2, by = "TagID") 
+
+attributeINfo2 <- attributeINfo %>%
+  left_join(releaseSites, by = "ReleaseSite") %>%
+  select(
+    Num,
+    River,	MobileSite,	Date,	Time,	T109_C,	UTM_X,	UTM_Y,	TagType,	TagID,	Event,	Ant,	Pass,	Species,	Length,
+    Weight,
+    TagSize,
+    RS_Num,
+    ReleaseSite,
+    Survey,
+    Notes
+    
+  )
+
+mobile07Processed <- mobileProcessingFunction(unprocessedMobileData = allDataUnclean, dayOneDate = dayOneDate)
+data <- mobile07Processed$processedMobileData
+write_csv(attributeINfo2, "data/Outputs/202607_MobileData.csv")
