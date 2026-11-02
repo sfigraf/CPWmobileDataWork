@@ -42,7 +42,7 @@ allDataUnclean <- bind_rows(dfList)
 mobile07Processed <- mobileProcessingFunction(unprocessedMobileData = allDataUnclean, dayOneDate = dayOneDate)
 data <- mobile07Processed$processedMobileData
 mobile07Processed$map
-write_csv(attributeINfo2, "data/Outputs/202607_MobileData.csv")
+write_csv(data, "data/Outputs/202607_MobileData.csv")
 
 # names(allDataUnclean)
 # allData_2 <- allDataUnclean %>%
@@ -229,17 +229,17 @@ write_csv(attributeINfo2, "data/Outputs/202607_MobileData.csv")
 
 
 ##checking with already done data
-combinedGISdatatoCheck <- read_csv("data/combinedGISdatatoCheck.csv")
-x<- combinedGISdatatoCheck %>%
-  select(TagID, Date, Time, Lat_DD, Long_DD) %>%
-  mutate(Date = as.character(mdy(Date)), 
-         Time = as.character(Time))
-checkFinal <- allData_final2 %>%
-  mutate(TagID = as.numeric(TagID)) %>%
-  select(TagID, Date, Time, Lat_DD, Long_DD) %>%
-  left_join(x, by =c("TagID", "Date", "Time")) %>%
-  mutate(latCheck = Lat_DD.x - Lat_DD.y, 
-         longCheck = Long_DD.x- Long_DD.y)
+# combinedGISdatatoCheck <- read_csv("data/combinedGISdatatoCheck.csv")
+# x<- combinedGISdatatoCheck %>%
+#   select(TagID, Date, Time, Lat_DD, Long_DD) %>%
+#   mutate(Date = as.character(mdy(Date)), 
+#          Time = as.character(Time))
+# checkFinal <- allData_final2 %>%
+#   mutate(TagID = as.numeric(TagID)) %>%
+#   select(TagID, Date, Time, Lat_DD, Long_DD) %>%
+#   left_join(x, by =c("TagID", "Date", "Time")) %>%
+#   mutate(latCheck = Lat_DD.x - Lat_DD.y, 
+#          longCheck = Long_DD.x- Long_DD.y)
 
 
 # October Survey ----------------------------------------------------------

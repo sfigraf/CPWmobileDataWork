@@ -11518,7 +11518,7 @@ Colorado River Connectivity Channel,CRCC Above CU Antenna,5/7/2025,9:50:00,41675
 Colorado River Connectivity Channel,CRCC Above CU Antenna,5/7/2025,9:50:00,416756,4439475,RBT,276,228,HA,230000226136,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CU Antenna,5/7/2025,9:50:00,416756,4439475,RBT,235,131,HA,230000226165,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,5/7/2025,10:45:00,416572,4439476,LOC,352,470,HA,230000226166,pass,32,Handheld,Release,adp,0,
-Colorado River Connectivity Channel,CRCC Above US Split Flow,5/7/2025,10:45:00,416572,4439476,LOC,358,427,HA,230000266137,pass,32,Handheld,Release,adp,0,
+Colorado River Connectivity Channel,CRCC Above US Split Flow,5/7/2025,10:45:00,416572,4439476,LOC,358,427,HA,230000226137,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,5/7/2025,10:45:00,416572,4439476,LOC,307,292,HA,230000226167,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,5/7/2025,10:45:00,416572,4439476,LOC,290,239,HA,230000226138,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,5/7/2025,10:45:00,416572,4439476,LOC,320,333,HA,230000226168,,32,Handheld,Release,adp,0,
@@ -18607,7 +18607,7 @@ Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:0
 Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,LOC,168,47,HA,230000226634,,32,Handheld,Release,,0,
 Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,LOC,180,54,HA,230000226635,,32,Handheld,Release,,0,
 Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,RBT,131,26,HA,230000226637,,32,Handheld,Release,,0,
-Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,LOC,170,45,HA,230000022636,fail,32,Handheld,Release,,0,TagID was missing a 0
+Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,LOC,170,45,HA,230000226636,fail,32,Handheld,Release,,0,TagID was missing a 0
 Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,LOC,170,48,HA,230000226638,pass,32,Handheld,Release,,0,
 Colorado River Connectivity Channel,CRCC Side Channel Below CS,9/30/2025,15:50:00,415774,4439934,LOC,185,57,HA,230000226639,,32,Handheld,Release,,0,
 Colorado River,Lower River Run,10/1/2025,15:30:00,418207,4439939,LOC,526,1458,HA,230000226641,pass,32,Handheld,Release,,0,TLNT/SF
@@ -18820,7 +18820,7 @@ Colorado River,Upper River Run,10/1/2025,17:15:00,418781,4440027,LOC,161,41,HA,2
 Colorado River,Upper River Run,10/1/2025,17:15:00,418781,4440027,LOC,163,44,HA,230000226481,,32,Handheld,Release,,0,
 Colorado River,Upper River Run,10/1/2025,17:15:00,418781,4440027,LOC,178,58,HA,230000226530,,32,Handheld,Release,,0,
 Colorado River,Upper River Run,10/1/2025,17:15:00,418781,4440027,MTS,72,5,HA,226000369868,pass,32,Handheld,Release,,0,
-Colorado River Connectivity Channel,CRCC Above CU Antenna,4/27/2026,12:15:00,416756,4439475,RBT,406,550,HA,230000226916,pass,32,Handheld,Release,adp,0,
+Colorado River Connectivity Channel,CRCC Above CU Antenna,4/27/2026,12:15:00,416756,4439475,RBT,406,550,HA,230000226416,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CU Antenna,4/27/2026,12:15:00,416756,4439475,LOC,189,104,HA,230000226444,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CU Antenna,4/27/2026,12:15:00,416756,4439475,RBT,388,616,HA,230000226417,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CU Antenna,4/27/2026,12:15:00,416756,4439475,RBT,344,489,HA,230000226446,,32,Handheld,Release,adp,0,
@@ -19237,6 +19237,7 @@ Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,RBT,361,508,HA,230000294525,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,LOC,228,113,HA,230000294563,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,LOC,235,129,HA,230000294524,,32,Handheld,Release,adp,0,
+Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,LOC,181,58,HA,230000294523,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,LOC,220,100,HA,230000294562,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,LOC,411,644,HA,230000294561,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above US Split Flow,4/29/2026,11:15:00,416572,4439476,LOC,373,523,HA,230000294522,,32,Handheld,Release,adp,0,
@@ -19285,6 +19286,7 @@ Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415
 Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,LOC,334,373,HA,230000294583,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,LOC,340,379,HA,230000294599,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,RBT,378,611,HA,230000294598,,32,Handheld,Release,adp,0,
+Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,LOC,256,154,HA,230000294581,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,LOC,365,496,HA,230000294597,,32,Handheld,Recapture and Release,adp,0,TLNT
 Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,LOC,432,661,HA,230000294580,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Above CD Antenna,4/29/2026,13:30:00,415803,4439872,RBT,322,368,HA,230000294596,,32,Handheld,Release,adp,0,
@@ -19371,6 +19373,7 @@ Colorado River Connectivity Channel,CRCC Downstream Confluence,4/29/2026,16:30:0
 Colorado River Connectivity Channel,CRCC Downstream Confluence,4/29/2026,16:30:00,415856,4440178,LOC,214,98,HA,230000294683,pass,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Downstream Confluence,4/29/2026,16:30:00,415856,4440178,LOC,177,56,HA,230000294684,,32,Handheld,Release,adp,0,
 Colorado River Connectivity Channel,CRCC Downstream Confluence,4/29/2026,16:30:00,415856,4440178,LOC,152,33,HA,230000294673,,32,Handheld,Release,adp,0,
+Colorado River Connectivity Channel,CRCC Downstream Confluence,4/29/2026,16:30:00,415856,4440178,,,,HA,230000294672,,32,Handheld,Release,adp,0,Not listed on data sheets but has detections
 Colorado River,Upper Red Barn Fry Site,4/30/2026,13:15:00,412728,4439665,LOC,362,452,HA,230000294685,,32,Handheld,Release,adp,0,
 Colorado River,Upper Red Barn Fry Site,4/30/2026,13:15:00,412728,4439665,LOC,408,596,HA,230000294686,pass,32,Handheld,Release,adp,0,
 Colorado River,Upper Red Barn Fry Site,4/30/2026,13:15:00,412728,4439665,LOC,384,596,HA,230000294687,pass,32,Handheld,Release,adp,0,
