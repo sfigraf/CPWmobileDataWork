@@ -35,11 +35,11 @@ m1_07Day2 <- read_csv("data/CR1000 M1_Detection_20260715.dat", skip = 1) %>%
 m2_07Day2 <- read_csv("data/CR1000X M2_Detection_20260715.dat", skip = 1) %>%
   mutate(Ant = "M2")
 
-dfList <- list(m1_07Day1, m1_07Day2, 
+dfList07 <- list(m1_07Day1, m1_07Day2, 
                m2_07Day1, m2_07Day2)
-allDataUnclean <- bind_rows(dfList)
+allDataUnclean07 <- bind_rows(dfList07)
 ###exectue function for July SUrvey
-mobile07Processed <- mobileProcessingFunction(unprocessedMobileData = allDataUnclean, dayOneDate = dayOneDate)
+mobile07Processed <- mobileProcessingFunction(unprocessedMobileData = allDataUnclean07, dayOneDate = dayOneDate)
 data <- mobile07Processed$processedMobileData
 mobile07Processed$map
 write_csv(data, "data/Outputs/202607_MobileData.csv")
@@ -94,7 +94,7 @@ write_csv(data, "data/Outputs/202610_MobileData.csv")
 
 # Lat Long Check ----------------------------------------------------------
 #isolating different instances of same coords
-data <- mobile07Processed$processedMobileData
+data <- mobile10Processed$processedMobileData
 data <- data %>%
   mutate(exact_valueUTM_X = sprintf("%.10f", UTM_X))
 countData <- data %>%

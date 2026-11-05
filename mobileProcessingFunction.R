@@ -110,6 +110,10 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
     map <- map %>%
       addCircleMarkers(
         data = df_subset,
+        clusterOptions = markerClusterOptions(
+          spiderfyOnMaxZoom = TRUE,
+          spiderfyDistanceMultiplier = 1.8
+        ),
         lng = ~Long_DD, 
         lat = ~Lat_DD,
         group = as.character(cat),       # Sets the group name for layer control
@@ -120,6 +124,8 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
         popup = ~paste(
           df_subset$Date, "<br>",
           df_subset$Time, "<br>",
+          df_subset$Lat_DD, "<br>",
+          df_subset$Long_DD, "<br>",
           df_subset$TagID) # Optional popup
       )
   }
