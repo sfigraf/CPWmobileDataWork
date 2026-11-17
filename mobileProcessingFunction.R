@@ -2,64 +2,76 @@
 #also returns map to aid in qaqc with River, mobileSite etc
 #it deletes bad rows, fitlers out test tags, 
 mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags1 = testTags, Release1 = Release, releaseSites1 = releaseSites){
-  allData_2 <- unprocessedMobileData %>%
-    filter(str_detect(TagID, "^900_\\d{12}"))
   
-  ##parsing lat/long 
-  allData_latLong <- allData_2 %>%
+  # Initial filtering and lat long coord parsing ----------------------------
+  parsedCoordsData <- unprocessedMobileData %>%
+    # Keep only valid PIT tags matching the standard 15-digit ISO format ("900_" followed by 12 digits)
+    filter(str_detect(TagID, "^900_\\d{12}")) %>%
     mutate(
-      #degrees
+      # Parse NMEA/RMC latitude (formatted as DDMM.MMMM) into Decimal Degrees (DD):
+      # Extract the first 2 characters as integer degrees
       Lat_deg = as.numeric(str_sub(rmclatitude, 1, 2)), 
-      #minutes; eric just subtracts by 4000, since tis character I'm just taking 3rd character onward
+      # Extract everything from the 3rd character onward as decimal minutes
       Lat_min = as.numeric(str_sub(rmclatitude, 3)), 
-      #decimal degrees
-      Lat_DD = round(Lat_deg + (Lat_min / 60), 6)
-    ) %>%
-    #long
-    mutate(
-      Long_deg = abs(as.numeric(str_sub(rmclongitude, 2, 4))), 
-      Long_min = abs(as.numeric(str_sub(rmclongitude, 5))),
-      Long_DD = -(round(Long_deg + (Long_min/60), 6))
+      # Convert minutes to fractional degrees (divide by 60) and add to degrees
+      Lat_DD = round(Lat_deg + (Lat_min / 60), 6),
       
+      
+      # Parse NMEA/RMC longitude (formatted as -DDDMM.MMMM or WDDDMM.MMMM) into Decimal Degrees:
+      # Extract characters 2 through 4 as degrees (skipping the leading minus sign or 'W')
+      Long_deg = abs(as.numeric(str_sub(rmclongitude, 2, 4))), 
+      # Extract everything from the 5th character onward as decimal minutes
+      Long_min = abs(as.numeric(str_sub(rmclongitude, 5))),
+      # Combine degrees and fractional minutes, then apply negative sign for Western Hemisphere
+      Long_DD = -(round(Long_deg + (Long_min/60), 6))
     )
   
-  ### TImStamp
-  allData_latLongTimsetamp <- allData_latLong %>%
+
+# Timestamp formatting and Date Filtering ---------------------------------
+
+ 
+  timeFilteredData <- parsedCoordsData %>%
     mutate(
-      # 1. Convert the original column to a proper datetime format (POSIXct)
-      # ymd_hms automatically handles the fractional seconds (.04)
+      # Parse string timestamps into POSIXct datetime objects in Mountain Time
       TIMESTAMP = ymd_hms(TIMESTAMP, tz = "America/Denver"),
-      # 
-      # # 2. Extract just the date part (Date format)
-      # DetDate = as.Date(TIMESTAMP),
-      # 
-      # # 3. Extract just the time part as a character (or time class)
-      DetTime2 = format(round_date(TIMESTAMP, "second"), "%H:%M:%S") 
+      # Round timestamps to the nearest whole second and format as HH:MM:SS
+      DetTime_clean = format(round_date(TIMESTAMP, "second"), "%H:%M:%S")
     ) %>%
-    #remove tags before starting
+    # Discard any equipment testing detections logged before the official survey start date
     filter(TIMESTAMP > dayOneDate)
   
   #correct tag # and no dupes
-  allData_latLongTimsetampTags2 <- allData_latLongTimsetamp %>%
+  cleanDetections <- timeFilteredData %>%
     #making sure time order is correct, probably redundant
+    # but important so lag() compares consecutive pings accurately
     arrange(Ant, TIMESTAMP) %>%
+    # grouping by antenna is a safety precaution if the last tag entry of the M1 run is the same as the first in the M2 run, that won't get deleted
+    #should be impossible based on how we run our surveys and hor the data is arranged but good to be safe for other surveys
+    group_by(Ant) %>%
+    # Strip the "900_" prefix (first 4 characters), keeping only the 12-digit unique tag ID
     mutate(TagID = str_sub(TagID, 5), 
+           # Flag consecutive duplicate detections: if the current TagID matches the previous row's TagID,
+           # mark as 0 (duplicate); otherwise mark as 1 (unique detection). First row defaults to 1.
            dupes = if_else(lag(TagID) == TagID, 0, 1, missing = 1)
-           #dupes = if_else(lag(TagID) == TagID, 1, 0, missing = 0)
     ) %>%
-    filter(dupes == 1)
+    # Retain only non-consecutive pings
+    filter(dupes == 1) %>%
+    ungroup()
   #filter out test tags
-  allData_latLongTimsetampTagsNoTests <- allData_latLongTimsetampTags2 %>%
+  cleanDetections2 <- cleanDetections %>%
     filter(!TagID %in% unique(testTags1$cleanTag))
-  
-  allData_final <- allData_latLongTimsetampTagsNoTests %>%
+
+# Standardize Columns for export ------------------------------------------
+
+  allData_final <- cleanDetections2 %>%
     mutate(#Ant = "M1", 
       Pass = NA, 
-      River = "Colorado River", 
+      #need to be annotated
+      River = NA, 
       MobileSite = NA, 
       Num = NA, 
       Notes = NA, 
-      Survey = "Summer 2026", 
+      Survey = NA, 
       Event = "Detection")
   ## Get columns in right order before reprojecting: this is like "combined data for GIS" sheet in the excel workbook
   allData_final2 <- allData_final %>%
@@ -69,7 +81,7 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
       MobileSite,
       Date = DetDate,
       #time is the time on the timsetampo not in the native DetTime column
-      Time = DetTime2,
+      Time = DetTime_clean,
       T109_C,
       Long_DD,
       Lat_DD,
@@ -84,23 +96,30 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
 # Reprojecting Coords and making Map --------------------------------------
 
   
-  ## reprojecting coords; need to first make wgs84 sf object
+  ## Define the WGS84 geographic coordinate reference system (EPSG:4326)
   latLongCRS <- st_crs("+proj=longlat +datum=WGS84 +no_defs") #should be same as +init=epsg:4326
   
+  # Convert the dataframe into a spatial sf object while keeping Lat/Long as standard columns
   dataInWGS84 <- sf::st_as_sf(allData_final2, coords = c("Long_DD", "Lat_DD"), crs = latLongCRS, remove = FALSE)
-  #before reprojecting, make map
-  ## MAP: used to check crcc etc
-  map <- leaflet() %>%
-    addProviderTiles(providers$Esri.WorldImagery,
-                     options = providerTileOptions(maxZoom = 19.5)
-    ) 
+  
+  # Create a grouping variable combining Date and Antenna for map layer toggling
   dataInWGS842 <- dataInWGS84 %>%
     mutate(categoryColumn = paste(Date, Ant))
+  # Extract unique Date-Antenna combinations and assign a distinct color to each
   categories <- unique(dataInWGS842$categoryColumn)
   color_palette <- colorFactor(
     palette = c("red", "blue", "green", "purple"), # Choose 4 distinct colors
     domain = categories
   )
+  
+
+  ## MAP: used to check crcc etc
+  map <- leaflet() %>%
+    addProviderTiles(providers$Esri.WorldImagery,
+                     options = providerTileOptions(maxZoom = 19.5)
+    ) 
+  
+  # Loop through each Date-Antenna group to plot clustered markers on separate toggleable layers
   for (cat in categories) {
     
     # Filter data for just this category
@@ -129,16 +148,18 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
           df_subset$TagID) # Optional popup
       )
   }
-  
+  # add in interactive layer control using groupings from above
   map <- map %>%
     addLayersControl(
       overlayGroups = as.character(categories),
       options = layersControlOptions(collapsed = FALSE)
     )
-  
-  #convert to UTMs
-  reproject <- sf::st_transform(dataInWGS84, 32613)
-  reproject2 <- reproject %>%
+
+# Reproject Coordinates to UTMs -------------------------------------------
+
+  ## Reproject spatial coordinates from WGS84 (Lat/Long) to NAD83 / WGS84 UTM Zone 13N (EPSG:32613)
+  datainUTMs <- sf::st_transform(dataInWGS84, 32613)
+  datainUTMs2 <- datainUTMs %>%
     mutate(
       UTM_X = st_coordinates(.)[, "X"],
       UTM_Y = st_coordinates(.)[, "Y"]
@@ -146,7 +167,7 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
     st_drop_geometry()
   
   ###Getting attribute info
-  attributeINfo <- Release1 %>%
+  finalProcessedData <- Release1 %>%
     select(TagID,
            Species,
            Length,
@@ -154,10 +175,10 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
            TagSize,
            ReleaseSite
     ) %>%
-    right_join(reproject2, by = "TagID") 
+    right_join(datainUTMs2, by = "TagID") 
   # adding release site numbers
   # final df columns based on whats in exel sheet mobile_AllData
-  attributeINfo2 <- attributeINfo %>%
+  finalProcessedData2 <- finalProcessedData %>%
     left_join(releaseSites1, by = "ReleaseSite") %>%
     select(
       Num,
@@ -172,7 +193,7 @@ mobileProcessingFunction <- function(unprocessedMobileData, dayOneDate, testTags
     arrange(Ant, Date, Time)
   
   return(list(
-    "processedMobileData" = attributeINfo2,
+    "processedMobileData" = finalProcessedData2,
     "map" = map
   ))
 }
